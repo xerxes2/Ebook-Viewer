@@ -70,11 +70,11 @@ class MainWindow(Gtk.ApplicationWindow):
         # Adds WebKit viewer component from Viewer component
         self.viewer = viewer.Viewer(self)
         print("Displaying blank page.")
-        self.viewer.view.load_uri("about:blank")  # Display a blank page
-        self.viewer.view.connect("load-changed", self.__ajust_scroll_position)
-        self.viewer.view.connect("load-changed", self.__save_new_position)
-        self.viewer.view.connect("event", self.__set_title_from_scroll)
-        self.right_box.pack_end(self.viewer.view, True, True, 0)
+        self.viewer.load_uri("about:blank")  # Display a blank page
+        self.viewer.connect("load-changed", self.__ajust_scroll_position)
+        self.viewer.connect("load-changed", self.__save_new_position)
+        self.viewer.connect("event", self.__set_title_from_scroll)
+        self.right_box.pack_end(self.viewer, True, True, 0)
 
         # Create Chapters List component and pack it on the left
         self.chapters_list_component = chapters_list.ChaptersListComponent(self)
@@ -128,7 +128,7 @@ class MainWindow(Gtk.ApplicationWindow):
         Returns position of scroll in Scrollable Window
         :return:
         """
-        return self.viewer.view.get_title()
+        return self.viewer.get_title()
 
     @property
     def __get_saved_scroll(self):
@@ -164,10 +164,10 @@ class MainWindow(Gtk.ApplicationWindow):
         Gdk.threads_leave()
 
     def __set_title(self, _title):
-        self.viewer.view.run_javascript("document.title = %s;" %(_title))
+        self.viewer.run_javascript("document.title = %s;" %(_title))
 
     def __set_title_from_scroll(self, _a, _b):
-        self.viewer.view.run_javascript("var x = window.scrollY;document.title = x.toString();")
+        self.viewer.run_javascript("var x = window.scrollY;document.title = x.toString();")
 
     def __ajust_scroll_position(self, widget, data):
         """
@@ -175,7 +175,7 @@ class MainWindow(Gtk.ApplicationWindow):
         :param widget:
         :param data:
         """
-        self.viewer.view.run_javascript("window.scrollTo(0, %s)" %(self.scroll_to_set))
+        self.viewer.run_javascript("window.scrollTo(0, %s)" %(self.scroll_to_set))
 
     def __save_new_position(self, wiget, data):
         """
@@ -276,7 +276,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def __continiue_book_loading(self, filename):
         self.spinner.stop()
-        self.viewer.view.show()
+        self.viewer.show()
         self.right_box.remove(self.spinner)
          # Try to load book, returns true when book loaded without errors
         if self.content_provider.prepare_book(filename):
@@ -322,7 +322,7 @@ class MainWindow(Gtk.ApplicationWindow):
         :param filename:
         """
         self.spinner.start()
-        self.viewer.view.hide()
+        self.viewer.hide()
         self.right_box.add(self.spinner)
         self.filename = filename
         if not filename.upper().endswith(tuple(constants.NATIVE)):

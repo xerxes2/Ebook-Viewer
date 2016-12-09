@@ -20,23 +20,24 @@ gi.require_version('WebKit2', '4.0')
 from gi.repository import WebKit2 as WebKit
 from gi.repository import Gdk
 
-class Viewer():
+class Viewer(WebKit.WebView):
     def __init__(self, window):
         """
         Provides Webkit WebView element to display ebook content
         :param window: Main application window reference, serves as communication hub
         """
+        self.__window = window
+
         self.manager = WebKit.UserContentManager.new()
-        self.view = WebKit.WebView.new_with_user_content_manager(self.manager)
+        WebKit.WebView.__init__(self, user_content_manager=self.manager)
 
         # Allow transparency so we can use GTK theme as background
         # Can be overridden by CSS background property, needs to be rgba(0,0,0,0)
         color = Gdk.RGBA(0,0,0,0)
-        self.view.set_background_color(color)
+        self.set_background_color(color)
 
-        # Sets WebView settings for ebook display
-        # No java script etc.
-        settings = self.view.get_settings()
+        # Sets WebView settings for ebook display.
+        settings = self.get_settings()
         settings.props.enable_javascript = True
         settings.props.enable_plugins = False
         settings.props.enable_page_cache = False
@@ -44,9 +45,9 @@ class Viewer():
         settings.props.enable_webgl = False
         settings.props.enable_html5_local_storage = False
 
-        self.view.connect('context-menu', self.callback)
+        self.connect('context-menu', self.callback)
 
-        self.__window = window
+        
 
     def load_current_chapter(self):
         """
@@ -59,7 +60,7 @@ class Viewer():
 
         try:
             with open(file_url) as file_open:
-                self.view.load_html(file_open.read(), "file://" + file_url)
+                self.load_html(file_open.read(), "file://" + file_url)
                 print("Loaded: " + file_url)
         except IOError:
             print("Could not read: ", file_url)
