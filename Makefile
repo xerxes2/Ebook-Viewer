@@ -40,6 +40,7 @@ install-bin: easy-ebook-viewer
 	install -m 644 src/workers/xml2obj.py ${INSTALL_DIR}/workers/xml2obj.py
 	install -m 644 src/workers/content_provider.py ${INSTALL_DIR}/workers/content_provider.py
 	install -m 644 misc/easy-ebook-viewer-scalable.svg ${INSTALL_DIR}/misc/easy-ebook-viewer-scalable.svg
+	sed -i "s|PREFIX|${PREFIX}|g" ${INSTALL_DIR}/components/viewer.py
 
 install-locale:
 	install -d ${INSTALL_DIR}/locale/pl

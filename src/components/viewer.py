@@ -47,8 +47,6 @@ class Viewer(WebKit.WebView):
 
         self.connect('context-menu', self.callback)
 
-        
-
     def load_current_chapter(self):
         """
         Loads current chapter as pointed by content porvider
@@ -70,9 +68,9 @@ class Viewer(WebKit.WebView):
         Sets style sheet
         """
         if _int == 1:
-            _file = open("/usr/share/easy-ebook-viewer/css/night.css")
+            _file = open("PREFIX/share/easy-ebook-viewer/css/night.css")
         else:
-            _file = open("/usr/share/easy-ebook-viewer/css/day.css")
+            _file = open("PREFIX/share/easy-ebook-viewer/css/day.css")
         css_str = _file.read()
         _file.close()
         style_sheet = WebKit.UserStyleSheet.new(css_str, WebKit.UserContentInjectedFrames.ALL_FRAMES, WebKit.UserStyleLevel.USER, None, None)
