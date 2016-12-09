@@ -31,8 +31,7 @@ class Viewer():
 
         # Allow transparency so we can use GTK theme as background
         # Can be overridden by CSS background property, needs to be rgba(0,0,0,0)
-        color = Gdk.RGBA()
-        color.parse("rgba(0,0,0,0)")
+        color = Gdk.RGBA(0,0,0,0)
         self.view.set_background_color(color)
 
         # Sets WebView settings for ebook display
