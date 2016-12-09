@@ -38,7 +38,7 @@ class Viewer():
         # Sets WebView settings for ebook display
         # No java script etc.
         settings = self.view.get_settings()
-        settings.props.enable_javascript = False
+        settings.props.enable_javascript = True
         settings.props.enable_plugins = False
         settings.props.enable_page_cache = False
         settings.props.enable_java = False

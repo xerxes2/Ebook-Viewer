@@ -15,9 +15,10 @@
 import threading
 import constants
 import gi
+import time
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GObject
+from gi.repository import Gtk, Gdk, GObject, Gio
 from components import header_bar, viewer, chapters_list
 from workers import config_provider as config_provider_module, content_provider as content_provider_module
 import sys
@@ -31,7 +32,6 @@ class MainWindow(Gtk.ApplicationWindow):
         Gtk.Window.__init__(self)
         self.set_border_width(0)
         self.set_default_size(800, 800)
-        self.connect("destroy", self.__on_exit)
         self.connect("key-press-event", self.__on_keypress_viewer)
         self.job_running = False
 
@@ -58,31 +58,26 @@ class MainWindow(Gtk.ApplicationWindow):
         self.header_bar_component = header_bar.HeaderBarComponent(self)
         self.set_titlebar(self.header_bar_component)
 
-        # Prepares scollable window to host WebKit Viewer
-        self.right_scrollable_window = Gtk.ScrolledWindow()
-        self.right_scrollable_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        self.right_scrollable_window.get_vscrollbar().connect("show", self.__ajust_scroll_position)
-        self.right_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.paned.pack2(self.right_box, True, True)  # Add to right panned
-
         # Prepares scollable window to host Chapters and Bookmarks
         self.left_scrollable_window = Gtk.ScrolledWindow()
         self.left_scrollable_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         # Don't show it after startup ie. don't pack it to self.panned
         self.is_paned_visible = False;
 
+        # Right box for spinner and webview
+        self.right_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.paned.pack2(self.right_box, True, True)  # Add to right panned
         # Adds WebKit viewer component from Viewer component
-
         self.viewer = viewer.Viewer(self)
         print("Displaying blank page.")
         self.viewer.view.load_uri("about:blank")  # Display a blank page
         self.viewer.view.connect("load-changed", self.__ajust_scroll_position)
         self.viewer.view.connect("load-changed", self.__save_new_position)
-        self.right_box.pack_end(self.right_scrollable_window, True, True, 0)
+        self.viewer.view.connect("event", self.__set_title_from_scroll)
+        self.right_box.pack_end(self.viewer.view, True, True, 0)
+
         # Create Chapters List component and pack it on the left
         self.chapters_list_component = chapters_list.ChaptersListComponent(self)
-
-        self.right_scrollable_window.add(self.viewer.view)
         self.left_scrollable_window.add(self.chapters_list_component)
 
         self.spinner = Gtk.Spinner()
@@ -93,7 +88,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.__update_night_day_style()
 
         # No initial scroll offset
-        self.scroll_to_set = 0.0
+        self.scroll_to_set = 0
 
         # Create context menu for right click
         self.menu = Gtk.Menu()
@@ -133,7 +128,7 @@ class MainWindow(Gtk.ApplicationWindow):
         Returns position of scroll in Scrollable Window
         :return:
         """
-        return self.right_scrollable_window.get_vadjustment().get_value()
+        return self.viewer.view.get_title()
 
     @property
     def __get_saved_scroll(self):
@@ -141,7 +136,11 @@ class MainWindow(Gtk.ApplicationWindow):
         Returns saved scroll position obtained from config provider
         :return:
         """
-        return float(self.config_provider.config[self.content_provider.book_md5]["position"])
+        try:
+            _pos = int(self.config_provider.config[self.content_provider.book_md5]["position"])
+        except:
+            _pos = 0
+        return _pos
 
     def __load_chapter_pos(self):
         """
@@ -155,7 +154,7 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         self.scroll_to_set = self.__get_saved_scroll
 
-    def __on_exit(self, window, data=None):
+    def on_exit(self, window, data=None):
         """
         Handles application exit and saves all unsaved config data to file
         :param window:
@@ -164,16 +163,19 @@ class MainWindow(Gtk.ApplicationWindow):
         self.save_current_book_data()
         Gdk.threads_leave()
 
+    def __set_title(self, _title):
+        self.viewer.view.run_javascript("document.title = %s;" %(_title))
+
+    def __set_title_from_scroll(self, _a, _b):
+        self.viewer.view.run_javascript("var x = window.scrollY;document.title = x.toString();")
+
     def __ajust_scroll_position(self, widget, data):
         """
         Handles Scrollable Window and WebView loaded events and attempts to set scroll if scroll offset is loaded
         :param widget:
         :param data:
         """
-        if self.scroll_to_set != 0.0:
-            self.right_scrollable_window.get_vadjustment().set_value(self.scroll_to_set)
-            if self.right_scrollable_window.get_vadjustment().get_value() != 0.0:
-                self.scroll_to_set = 0.0
+        self.viewer.view.run_javascript("window.scrollTo(0, %s)" %(self.scroll_to_set))
 
     def __save_new_position(self, wiget, data):
         """
@@ -189,6 +191,7 @@ class MainWindow(Gtk.ApplicationWindow):
         Loads chapter and manages navigation UI accordingly
         :param chapter:
         """
+        self.scroll_to_set = 0
         if self.content_provider.chapter_count >= chapter >= 0:
             self.content_provider.current_chapter = chapter
             self.viewer.load_current_chapter()
@@ -205,6 +208,7 @@ class MainWindow(Gtk.ApplicationWindow):
         :param wiget:
         :param data:
         """
+        self.scroll_to_set = 0
         if self.content_provider.status:
             key_value = Gdk.keyval_name(data.keyval)
             if key_value == "Right":
@@ -264,7 +268,6 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         Saves to book config current chapter and scroll position
         """
-
         # Save only if book was loaded before
         if self.content_provider.status:
             self.config_provider.save_chapter_position(self.content_provider.book_md5,

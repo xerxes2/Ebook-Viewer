@@ -19,6 +19,10 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject
 from main_window import MainWindow
 
+def __quit(_w, _a):
+    win.on_exit(None)
+    Gtk.main_quit()
+
 # Let the fun begin...
 if __name__ == "__main__":
     gettext.install('easy-ebook-viewer', '/usr/share/easy-ebook-viewer/locale')
@@ -26,7 +30,8 @@ if __name__ == "__main__":
     #lang.install()
     GObject.threads_init()
     win = MainWindow()
-    win.connect("delete-event", Gtk.main_quit)
+    #win.connect("delete-event", Gtk.main_quit)
+    win.connect("delete-event", __quit)
     win.set_wmclass(_("Easy eBook Viewer"), _("Easy eBook Viewer"))
     win.show_all()
     # If no book was loaded we need to tell it to hide navigation
@@ -34,3 +39,4 @@ if __name__ == "__main__":
     if not win.book_loaded:
         win.header_bar_component.hide_jumping_navigation()
     Gtk.main()
+
