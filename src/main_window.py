@@ -15,10 +15,9 @@
 import threading
 import constants
 import gi
-import time
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GObject, Gio
+from gi.repository import Gtk, Gdk, GObject
 from components import header_bar, viewer, chapters_list
 from workers import config_provider as config_provider_module, content_provider as content_provider_module
 import sys
