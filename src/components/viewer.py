@@ -27,13 +27,12 @@ class Viewer(WebKit.WebView):
         :param window: Main application window reference, serves as communication hub
         """
         self.__window = window
-
         self.manager = WebKit.UserContentManager.new()
         WebKit.WebView.__init__(self, user_content_manager=self.manager)
 
         # Allow transparency so we can use GTK theme as background
         # Can be overridden by CSS background property, needs to be rgba(0,0,0,0)
-        color = Gdk.RGBA(0,0,0,0)
+        color = self.__window.get_style_context().get_property("background-color", 0)
         self.set_background_color(color)
 
         # Sets WebView settings for ebook display.

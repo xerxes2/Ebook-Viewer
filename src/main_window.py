@@ -74,6 +74,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.viewer.connect("load-changed", self.__save_new_position)
         self.viewer.connect("event", self.__set_title_from_scroll)
         self.right_box.pack_end(self.viewer, True, True, 0)
+        #self.set_property("app-paintable", True)
+        #self.set_opacity(1.0)
+        #self.viewer.set_opacity(1.0)
 
         # Create Chapters List component and pack it on the left
         self.chapters_list_component = chapters_list.ChaptersListComponent(self)
