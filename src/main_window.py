@@ -26,11 +26,12 @@ from pathlib import Path
 
 
 class MainWindow(Gtk.ApplicationWindow):
-    def __init__(self):
+    def __init__(self, file_path=None):
         # Creates Gtk.Window and sets parameters
         Gtk.Window.__init__(self)
         self.set_border_width(0)
         self.set_default_size(800, 800)
+        self.connect("destroy", self.__on_exit)
         self.connect("key-press-event", self.__on_keypress_viewer)
         self.job_running = False
 
@@ -103,14 +104,12 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.book_loaded = False
         # If book came from arguments ie. was oppened using "Open with..." method etc.
-        if len(sys.argv) > 1:
-            # Check if that file really exists
-            if os.path.exists(sys.argv[1]):
-                # Save current book data
-                self.save_current_book_data()
-                # Load new book
-                self.load_book_data(sys.argv[1])
-                self.book_loaded = True
+        if file_path is not None:
+            # Save current book data
+            self.save_current_book_data()
+            # Load new book
+            self.load_book_data(sys.argv[1])
+            self.book_loaded = True
         else:
             # Try to load last book
             self.__reload_previous_book()
@@ -156,14 +155,13 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         self.scroll_to_set = self.__get_saved_scroll
 
-    def on_exit(self, window, data=None):
+    def __on_exit(self, window, data=None):
         """
         Handles application exit and saves all unsaved config data to file
         :param window:
         :param data:
         """
         self.save_current_book_data()
-        Gdk.threads_leave()
 
     def __set_title(self, _title):
         self.viewer.run_javascript("document.title = %s;" %(_title))
